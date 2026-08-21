@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0c0f">
+<title>ATR 시뮬레이션</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Noto+Sans+KR:wght@300;400;500&display=swap');
+:root {
+  --bg: #0a0c0f;
+  --surface: #111418;
+  --surface2: #1a1f26;
+  --border: #2a3340;
+  --accent: #00e5a0;
+  --accent2: #4da6ff;
+  --danger: #ff6b7a;
+  --warn: #ffb74d;
+  --text: #ffffff;
+  --text2: #b0bec5;
+  --text3: #607d8b;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 13px;
+  min-height: 100vh;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 24px);
+}
+
+header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.logo { font-family:'IBM Plex Mono',monospace; font-size:10px; font-weight:600; color:var(--accent); letter-spacing:3px; }
+.htitle { font-size:13px; font-weight:500; }
+
+.tabs {
+  display: flex;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 53px;
+  z-index: 90;
+}
+.tab {
+  flex: 1;
+  padding: 10px;
+  text-align: center;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--text3);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all .2s;
+}
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+.panel { display: none; padding: 16px; max-width: 900px; margin: 0 auto; }
+.panel.active { display: flex; flex-direction: column; gap: 14px; }
+
+.section-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 2px;
+  color: var(--text3);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.input-group label {
+  display: block;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--text2);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.inp {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 8px 10px;
+  color: var(--text);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  transition: border-color .2s;
+}
+.inp:focus { outline: none; border-color: var(--accent); }
+
+.slider-row { display: flex; flex-direction: column; gap: 4px; }
+.slider-row label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--text2);
+  text-transform: uppercase;
+  display: flex;
+  justify-content: space-between;
+}
+.slider-row label span { color: var(--accent); font-weight: 600; }
+input[type=range] {
+  width: 100%;
+  -webkit-appearance: none;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+  outline: none;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+}
+
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+.stat-label { font-family:'IBM Plex Mono',monospace; font-size:8px; color:var(--text3); letter-spacing:1.5px; text-transform:uppercase; margin-bottom:4px; }
+.stat-val { font-family:'IBM Plex Mono',monospace; font-size:16px; font-weight:600; }
+
+.chart-wrap { position: relative; width: 100%; height: 260px; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 8px; }
+.legend-item { display: flex; align-items: center; gap: 5px; font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--text2); }
+.legend-line { width: 18px; height: 2px; border-radius: 1px; }
+
+.info-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--text2);
+  line-height: 1.7;
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--surface); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">ATR</div>
+  <div style="color:var(--text3)">/</div>
+  <div class="htitle">손절·익절 시뮬레이션</div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('sim1')">손절/익절 계산기</div>
+  <div class="tab" onclick="switchTab('sim2')">원금 변화 시뮬레이션</div>
+</div>
+
+<!-- ── 탭 1: 손절/익절 계산기 ── -->
+<div class="panel active" id="sim1">
+
+  <div>
+    <div class="section-label">기본 설정</div>
+    <div class="input-grid">
+      <div class="input-group">
+        <label>매수가 (원)</label>
+        <input class="inp" id="t1_entry" type="number" value="50000" step="1000" oninput="calcSim1()">
+      </div>
+      <div class="input-group">
+        <label>ATR (원)</label>
+        <input class="inp" id="t1_atr" type="number" value="1500" step="100" oninput="calcSim1()">
+      </div>
+      <div class="input-group">
+        <label>투자금 (만원)</label>
+        <input class="inp" id="t1_capital" type="number" value="10000" step="500" oninput="calcSim1()">
+      </div>
+      <div class="input-group">
+        <label>종목당 손실 (%)</label>
+        <input class="inp" id="t1_risk" type="number" value="1" step="0.1" oninput="calcSim1()">
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="section-label">배수 설정</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="slider-row">
+        <label>손절 ATR 배수 <span id="t1_stopM_label">×2.0</span></label>
+        <input type="range" id="t1_stopM" min="0.5" max="3" step="0.5" value="2" oninput="calcSim1()">
+      </div>
+      <div class="slider-row">
+        <label>목표 ATR 배수 <span id="t1_tgtM_label">×3.0</span></label>
+        <input type="range" id="t1_tgtM" min="1" max="6" step="0.5" value="3" oninput="calcSim1()">
+      </div>
+    </div>
+  </div>
+
+  <div class="stat-grid" id="t1_stats"></div>
+
+  <div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-line" style="background:#e34948"></div>손절 구간</div>
+      <div class="legend-item"><div class="legend-line" style="background:#898781"></div>중립 구간</div>
+      <div class="legend-item"><div class="legend-line" style="background:#1baf7a"></div>목표 구간</div>
+    </div>
+    <div class="chart-wrap"><canvas id="t1_chart" role="img" aria-label="ATR 손절/익절 구간 차트"></canvas></div>
+  </div>
+
+  <div class="info-box" id="t1_info"></div>
+
+</div>
+
+<!-- ── 탭 2: 원금 변화 시뮬레이션 ── -->
+<div class="panel" id="sim2">
+
+  <div>
+    <div class="section-label">기본 설정</div>
+    <div class="input-grid">
+      <div class="input-group">
+        <label>초기 원금 (만원)</label>
+        <input class="inp" id="t2_capital" type="number" value="10000" step="500" oninput="calcSim2()">
+      </div>
+      <div class="input-group">
+        <label>종목당 리스크 (%)</label>
+        <input class="inp" id="t2_risk" type="number" value="1" step="0.1" min="0.1" oninput="calcSim2()">
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="section-label">시뮬레이션 설정</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="slider-row">
+        <label>손절 ATR 배수 <span id="t2_stopM_label">×2.0</span></label>
+        <input type="range" id="t2_stopM" min="1" max="3" step="0.5" value="2" oninput="calcSim2()">
+      </div>
+      <div class="slider-row">
+        <label>목표 ATR 배수 <span id="t2_tgtM_label">×3.0</span></label>
+        <input type="range" id="t2_tgtM" min="1" max="6" step="0.5" value="3" oninput="calcSim2()">
+      </div>
+      <div class="slider-row">
+        <label>총 매매 횟수 <span id="t2_trades_label">50회</span></label>
+        <input type="range" id="t2_trades" min="10" max="100" step="5" value="50" oninput="calcSim2()">
+      </div>
+      <div class="slider-row">
+        <label>승률 <span id="t2_wr_label">45%</span></label>
+        <input type="range" id="t2_wr" min="20" max="80" step="5" value="45" oninput="calcSim2()">
+      </div>
+    </div>
+  </div>
+
+  <div class="stat-grid" id="t2_stats"></div>
+
+  <div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-line" style="background:#1baf7a"></div>현재 설정</div>
+      <div class="legend-item"><div class="legend-line" style="background:#4da6ff;border-top:2px dashed #4da6ff;height:0"></div>ATR×1.5 비교</div>
+      <div class="legend-item"><div class="legend-line" style="background:#e34948"></div>손절 미실행</div>
+    </div>
+    <div class="chart-wrap"><canvas id="t2_chart" role="img" aria-label="원금 변화 시뮬레이션 차트"></canvas></div>
+  </div>
+
+  <div class="info-box" id="t2_info"></div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+var chart1 = null, chart2 = null;
+
+function switchTab(id) {
+  document.querySelectorAll('.tab').forEach(function(t,i){ t.classList.toggle('active', ['sim1','sim2'][i] === id); });
+  document.querySelectorAll('.panel').forEach(function(p){ p.classList.toggle('active', p.id === id); });
+}
+
+// ── 탭1: 손절/익절 계산기 ──
+function calcSim1() {
+  var entry   = parseFloat(document.getElementById('t1_entry').value)   || 50000;
+  var atr     = parseFloat(document.getElementById('t1_atr').value)     || 1500;
+  var capital = (parseFloat(document.getElementById('t1_capital').value) || 10000) * 10000;
+  var risk    = (parseFloat(document.getElementById('t1_risk').value)    || 1) / 100;
+  var stopM   = parseFloat(document.getElementById('t1_stopM').value)   || 2;
+  var tgtM    = parseFloat(document.getElementById('t1_tgtM').value)    || 3;
+
+  document.getElementById('t1_stopM_label').textContent = '×' + stopM.toFixed(1);
+  document.getElementById('t1_tgtM_label').textContent  = '×' + tgtM.toFixed(1);
+
+  var stop      = Math.round(entry - atr * stopM);
+  var tgt       = Math.round(entry + atr * tgtM);
+  var stopAmt   = Math.round(entry - stop);
+  var tgtAmt    = Math.round(tgt - entry);
+  var stopPct   = (stopAmt / entry * 100).toFixed(2);
+  var tgtPct    = (tgtAmt  / entry * 100).toFixed(2);
+  var rr        = (tgtAmt  / stopAmt).toFixed(2);
+  var allowed   = Math.round(capital * risk);
+  var qty       = Math.floor(allowed / stopAmt);
+  var buyAmt    = Math.round(qty * entry);
+  var maxLoss   = Math.round(qty * stopAmt);
+  var maxProfit = Math.round(qty * tgtAmt);
+
+  var stats = [
+    { label:'손절가',      val: stop.toLocaleString()+'원',                        color:'var(--danger)' },
+    { label:'목표가',      val: tgt.toLocaleString()+'원',                         color:'var(--accent)' },
+    { label:'손절폭',      val: '-'+stopPct+'% / -'+stopAmt.toLocaleString()+'원', color:'var(--danger)' },
+    { label:'수익폭',      val: '+'+tgtPct+'% / +'+tgtAmt.toLocaleString()+'원',   color:'var(--accent)' },
+    { label:'R:R',         val: '1 : '+rr,                                          color: parseFloat(rr)>=1.5?'var(--accent)':'var(--warn)' },
+    { label:'ATR 매수금액', val: Math.round(buyAmt/10000).toLocaleString()+'만원',  color:'var(--accent2)' },
+    { label:'매수수량',    val: qty.toLocaleString()+'주',                          color:'var(--text)' },
+    { label:'최대수익',    val: '+'+Math.round(maxProfit/10000).toLocaleString()+'만원', color:'var(--accent)' },
+  ];
+
+  document.getElementById('t1_stats').innerHTML = stats.map(function(s){
+    return '<div class="stat-card"><div class="stat-label">'+s.label+'</div>'
+      + '<div class="stat-val" style="color:'+s.color+'">'+s.val+'</div></div>';
+  }).join('');
+
+  document.getElementById('t1_info').innerHTML =
+    '손절 -'+stopPct+'% → 목표 +'+tgtPct+'% &nbsp;|&nbsp; R:R <strong style="color:'+(parseFloat(rr)>=1.5?'var(--accent)':'var(--warn)')+'">1:'+rr+'</strong>'
+    + (parseFloat(rr)>=1.5 ? ' ✓ 적정' : ' ⚠ 낮음')
+    + '<br>허용손실 '+Math.round(allowed/10000).toLocaleString()+'만원 → ATR×'+stopM+' 기준 '+qty.toLocaleString()+'주 ('+Math.round(buyAmt/10000).toLocaleString()+'만원)';
+
+  var minP  = Math.round(stop - atr * 0.5);
+  var maxP  = Math.round(tgt  + atr * 0.5);
+  var steps = 24;
+  var labels = [], pnlData = [], colors = [];
+  for (var i = 0; i <= steps; i++) {
+    var p = Math.round(minP + (maxP - minP) * i / steps);
+    labels.push(p.toLocaleString());
+    pnlData.push(Math.round(p - entry));
+    colors.push(p <= stop ? '#e34948' : p >= tgt ? '#1baf7a' : '#52514e');
+  }
+
+  if (chart1) { chart1.destroy(); chart1 = null; }
+  chart1 = new Chart(document.getElementById('t1_chart').getContext('2d'), {
+    type: 'bar',
+    data: { labels: labels, datasets: [{ data: pnlData, backgroundColor: colors, borderRadius: 3, borderSkipped: false }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(c){ return (c.raw>=0?'+':'')+c.raw.toLocaleString()+'원'; } } } },
+      scales: {
+        x: { ticks: { maxTicksLimit: 7, color:'#607d8b', font:{size:9} }, grid: { color:'rgba(42,51,64,.6)' } },
+        y: { ticks: { color:'#607d8b', font:{size:9}, callback: function(v){ return (v>=0?'+':'')+v.toLocaleString(); } }, grid: { color:'rgba(42,51,64,.6)' } }
+      }
+    }
+  });
+}
+
+// ── 탭2: 원금 변화 시뮬레이션 ──
+function simDet(capital, riskPct, stopM, tgtM, trades, wr) {
+  var history = [capital];
+  var cur = capital;
+  var wins = Math.round(trades * wr);
+  var pattern = [];
+  for (var i = 0; i < trades; i++) pattern.push(i < wins);
+  pattern.sort(function(){ return Math.random() - 0.5; });
+  for (var j = 0; j < trades; j++) {
+    var riskAmt = cur * riskPct;
+    var rr = tgtM / stopM;
+    cur = pattern[j] ? cur + riskAmt * rr : cur - riskAmt;
+    if (cur < 0) cur = 0;
+    history.push(Math.round(cur));
+  }
+  return history;
+}
+
+function calcSim2() {
+  var capital = (parseFloat(document.getElementById('t2_capital').value) || 10000) * 10000;
+  var risk    = (parseFloat(document.getElementById('t2_risk').value)    || 1) / 100;
+  var stopM   = parseFloat(document.getElementById('t2_stopM').value)   || 2;
+  var tgtM    = parseFloat(document.getElementById('t2_tgtM').value)    || 3;
+  var trades  = parseInt(document.getElementById('t2_trades').value)    || 50;
+  var wr      = (parseFloat(document.getElementById('t2_wr').value)     || 45) / 100;
+
+  document.getElementById('t2_stopM_label').textContent  = '×' + stopM.toFixed(1);
+  document.getElementById('t2_tgtM_label').textContent   = '×' + tgtM.toFixed(1);
+  document.getElementById('t2_trades_label').textContent = trades + '회';
+  document.getElementById('t2_wr_label').textContent     = Math.round(wr * 100) + '%';
+
+  var rr         = (tgtM / stopM).toFixed(2);
+  var expectancy = ((wr * tgtM / stopM) - (1 - wr)).toFixed(3);
+
+  var main   = simDet(capital, risk, stopM, tgtM, trades, wr);
+  var tight  = simDet(capital, risk, 1.5,  tgtM, trades, wr);
+  var noStop = simDet(capital, risk * 3, stopM, tgtM, trades, wr * 0.7);
+
+  var finalMain = main[main.length - 1];
+  var pct       = ((finalMain - capital) / capital * 100).toFixed(1);
+
+  var labels = [];
+  for (var i = 0; i <= trades; i++) labels.push(i + '회');
+
+  var stats = [
+    { label:'R:R',    val:'1 : '+rr,                        color: parseFloat(rr)>=1.5?'var(--accent)':'var(--warn)' },
+    { label:'기댓값', val: (parseFloat(expectancy)>0?'+':'')+expectancy, color: parseFloat(expectancy)>0?'var(--accent)':'var(--danger)' },
+    { label:'최종 원금', val: Math.round(finalMain/10000).toLocaleString()+'만원', color: finalMain>=capital?'var(--accent)':'var(--danger)' },
+    { label:'수익률', val: (parseFloat(pct)>=0?'+':'')+pct+'%', color: parseFloat(pct)>=0?'var(--accent)':'var(--danger)' },
+  ];
+
+  document.getElementById('t2_stats').innerHTML = stats.map(function(s){
+    return '<div class="stat-card"><div class="stat-label">'+s.label+'</div>'
+      + '<div class="stat-val" style="color:'+s.color+'">'+s.val+'</div></div>';
+  }).join('');
+
+  document.getElementById('t2_info').innerHTML =
+    '기댓값 <strong style="color:'+(parseFloat(expectancy)>0?'var(--accent)':'var(--danger)')+'">'+expectancy+'</strong> '
+    + (parseFloat(expectancy)>0?'→ 매매 횟수가 늘수록 원금 증가 확률 높음':'→ 매매 횟수가 늘수록 원금 소멸 위험')
+    + '<br>빨간선(손절 미실행): 포지션 3배 + 승률 30% 하락 가정';
+
+  if (chart2) { chart2.destroy(); chart2 = null; }
+  chart2 = new Chart(document.getElementById('t2_chart').getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        { label:'현재 설정', data: main.map(function(v){ return Math.round(v/10000); }),  borderColor:'#1baf7a', borderWidth:2, pointRadius:0, tension:.3, fill:false },
+        { label:'ATR×1.5',  data: tight.map(function(v){ return Math.round(v/10000); }), borderColor:'#4da6ff', borderWidth:2, borderDash:[5,4], pointRadius:0, tension:.3, fill:false },
+        { label:'손절미실행', data: noStop.map(function(v){ return Math.round(v/10000); }),borderColor:'#e34948', borderWidth:2, pointRadius:0, tension:.3, fill:false },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode:'index', intersect:false },
+      plugins: {
+        legend: { display:false },
+        tooltip: { callbacks: { label: function(c){ return c.dataset.label+': '+c.raw.toLocaleString()+'만원'; } } }
+      },
+      scales: {
+        x: { ticks:{ maxTicksLimit:8, color:'#607d8b', font:{size:9} }, grid:{ color:'rgba(42,51,64,.6)' } },
+        y: { ticks:{ color:'#607d8b', font:{size:9}, callback: function(v){ return v.toLocaleString()+'만'; } }, grid:{ color:'rgba(42,51,64,.6)' } }
+      }
+    }
+  });
+}
+
+calcSim1();
+calcSim2();
+</script>
+</body>
+</html>
